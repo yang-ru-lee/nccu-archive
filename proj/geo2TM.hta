@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=10">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地理坐標轉2度TM</title>
+<style>
+body {
+  background: #fffff0;
+  margin: 2.5rem;
+}
+table,tr,th {
+  border: 1px solid #000000;
+  white-space: nowrap;
+}
+.block {
+  height: 1.5rem;
+}
+.err {
+  background: #ffcccc;
+}
+</style>
+</head>
+<body>
+<h1>地理坐標轉2度TM</h1>
+<h5>By 107207439李泱儒</h5>
+<input id="csv" type="file" onchange="calc()">
+<div class="block"></div>
+<div id="result"><table><tr><th>點號</th><th>N(m)</th><th>E(m)</th><th>經(度-分-秒)</th><th>緯(度-分-秒)</th><th>N轉換(m)</th><th>E轉換(m)</th><th>N絕對差值(m)</th><th>E絕對差值(m)</th><th>距離差(m)</th><th>2cm內(T,F)</th></tr><tr><th>...</th><th>...</th><th>...</th><th>...</th><th>...</th><th>...</th><th>...</th><th>...</th><th>...</th><th>...</th><th>...</th></tr></table></div>
+<script>
+function calc() {
+  a = 6378137;
+  b = 6356752.314140347;
+  a2 = Math.pow(a,2);
+  b2 = Math.pow(b,2);
+  f = (a-b)/a;
+  e = Math.sqrt((a2-b2)/a2);
+  e2 = (a2-b2)/a2;
+  csv = document.getElementById("csv");
+  txt = new FileReader();
+  txt.readAsText(csv.files[0]);
+  txt.onload = function () {
+	lines = this.result.split("\n");
+	str = "";
+	for (i=0; i<lines.length; i+=1) {
+	  l = lines[i].split(",");
+	  lamda = l[3].split("-");
+	  lamda = (Number(lamda[0])+Number(lamda[1])/60+Number(lamda[2])/3600-121)*Math.PI/180;
+	  phi = l[4].split("-");
+	  phi = (Number(phi[0])+Number(phi[1])/60+Number(phi[2])/3600)*Math.PI/180;
+	  sinphi2 = Math.pow(Math.sin(phi),2);
+	  N = a/Math.sqrt(1-e2*sinphi2);
+	  M = a*(1-e2)/Math.pow((1-e2*sinphi2),1.5);
+	  eta = Math.sqrt(N/M-1);
+	  eta2 = N/M-1;
+	  S = a*(1-e2)*((1+3/4*e2+45/64*Math.pow(e2,2)+175/256*Math.pow(e2,3))*phi-(3/8*e2+15/32*Math.pow(e2,2)+525/1024*Math.pow(e2,3))*Math.sin(2*phi)+(15/256*Math.pow(e2,2)+105/1024*Math.pow(e2,3))*Math.sin(4*phi)-(35/3072*Math.pow(e2,3))*Math.sin(6*phi));
+	  y = 0.9999*(S+Math.pow(lamda,2)*N/2*Math.sin(phi)*Math.cos(phi)+Math.pow(lamda,4)*N/24*Math.sin(phi)*Math.pow(Math.cos(phi),3)*(5-Math.pow(Math.tan(phi),2)+9*eta2+4*Math.pow(eta2,2)));
+	  x = 0.9999*(lamda*N*Math.cos(phi)+Math.pow(lamda,3)*N/6*Math.pow(Math.cos(phi),3)*(1-Math.pow(Math.tan(phi),2)+eta2)+Math.pow(lamda,5)*N/120*Math.pow(Math.cos(phi),5)*(5-18*Math.pow(Math.tan(phi),2)+Math.pow(Math.tan(phi),4)))+250000;
+	  diffy = Math.abs(Number(l[1])-y);
+	  diffx = Math.abs(Number(l[2])-x);
+	  d = Math.sqrt(Math.pow(diffy,2)+Math.pow(diffx,2));
+	  if (d >= 0.02) {
+	    r = "F";
+		str += "<tr class='err'><th>"+l[0]+"</th><th>"+l[1]+"</th><th>"+l[2]+"</th><th>"+l[3]+"</th><th>"+l[4]+"</th><th>"+y+"</th><th>"+x+"</th><th>"+diffy+"</th><th>"+diffx+"</th><th>"+d+"</th><th>"+r+"</th></tr>";
+	  } else {
+	    r = "T";
+		str += "<tr><th>"+l[0]+"</th><th>"+l[1]+"</th><th>"+l[2]+"</th><th>"+l[3]+"</th><th>"+l[4]+"</th><th>"+y+"</th><th>"+x+"</th><th>"+diffy+"</th><th>"+diffx+"</th><th>"+d+"</th><th>"+r+"</th></tr>";
+	  }
+	}
+	document.getElementById("result").innerHTML = "<table><tr><th>點號</th><th>N(m)</th><th>E(m)</th><th>經(度-分-秒)</th><th>緯(度-分-秒)</th><th>N轉換(m)</th><th>E轉換(m)</th><th>N絕對差值(m)</th><th>E絕對差值(m)</th><th>距離差(m)</th><th>2cm內(T,F)</th></tr>"+str+"</table>";
+  }
+}
+</script>
+</body>
+</html>
