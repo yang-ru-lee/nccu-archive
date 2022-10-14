@@ -1,2 +1,2 @@
 # nccu-archive
-Some course-related archive.
+Some course-related archives.
